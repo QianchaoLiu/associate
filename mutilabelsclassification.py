@@ -6,13 +6,14 @@ import jieba.analyse
 import os
 import tensorflow as tf
 from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.preprocessing import MultiLabelBinarizer
 import numpy as np
 
 import sys
 reload(sys)
 sys.setdefaultencoding('utf8')
 
-class svmdemo(object):
+class softmaxdemo(object):
 
 
     def __init__(self):
@@ -27,6 +28,8 @@ class svmdemo(object):
     def labels(self,_labels):
         self._labels = _labels
 
+    def num_examples(self,_num):
+        self.num_examples = _num
     @staticmethod
     def _typecount(dataset):
         _type_list = []
@@ -69,7 +72,7 @@ class svmdemo(object):
         # define
         x = tf.placeholder(tf.float32, [None, input_item_length]) # None means that a dimension can be of any length
         W = tf.Variable(tf.zeros([input_item_length, output_item_length]))
-        b = tf.Variable(tf.zeros[output_item_length])
+        b = tf.Variable(tf.zeros([output_item_length]))
         y = tf.nn.softmax(tf.matmul(x,W)+b)
 
         # train
@@ -82,13 +85,21 @@ class svmdemo(object):
         for i in range(1000):
             batch_xs, batch_ys = self.next_batch(100)
             sess.run(train_step, feed_dict={x: batch_xs, y_: batch_ys})
+        predictions = tf.select(y > 0.5, tf.ones_like(y), tf.zeros_like(y))
+        print(predictions.eval(feed_dict ={x: self._text}))
 
 if __name__ == "__main__":
-    svm = svmdemo()
+    #path = '/usr/superman/classification/dat'
+    path = '/Users/liuqianchao/Desktop/dat'
+    write_path = '/Users/liuqianchao/Desktop/outside_dat'
+    sr = softmaxdemo()
     seg_document = []
     labels_list = []
 
-    for text_type in svm.read_dat('/Users/liuqianchao/Desktop/dat'):
+    jieba.enable_parallel(2)
+
+
+    for text_type in sr.read_dat(path):
 
         text, _type = text_type[0], text_type[1]
         seg_list = list(jieba.cut(text, cut_all=False))
@@ -100,6 +111,7 @@ if __name__ == "__main__":
         # 使用textrank提取关键词
         # for item in jieba.analyse.textrank(text):
         #     print item
+
     labels = reduce(lambda x, y: x+y, labels_list)
 
 
@@ -117,24 +129,36 @@ if __name__ == "__main__":
             tmp.append(labels_dict[single_label])
         _label.append(tmp)
 
+    _label = MultiLabelBinarizer().fit_transform(_label)
+
+
+    print len(_label[0])
     tfidf_vectorizer = TfidfVectorizer()
     real_vec = tfidf_vectorizer.fit_transform(seg_document)
     # 输入
     seg_vec = real_vec.toarray()
     seg_vec = np.array(seg_vec)
 
-    svm._text = seg_vec
-    svm._labels = _label
+    sr.text(seg_vec)
+    sr.labels(_label)
+
+    with open(write_path+'/seg_vec.dat','w') as wf:
+        for item in seg_vec:
+            wf.write(str(item)+'\n')
+    with open(write_path+'/_labels.dat','w') as wf:
+        for item in _label:
+
+            wf.write(str(item)+'\n')
 
     num_examples = len(seg_vec) # 407481
-    svm.num_examples = num_examples
+    sr.num_examples(num_examples)
 
+    sr.softmax_regression()
 
     # mnist: 55000 data 28*28=784 dimensions of vector, and the output is 55000 * 10 dimension
     # in this example, 407481 data, each data with dimension of 84140, and the output is 407481 * 246(number of knowledge)
-    print len(seg_vec[0]) # 84140
+    # print len(seg_vec[0]) # 84140
 
     # implement of tensorflow
-    svm.text()
-    svm.labels()
+
 
