@@ -1,0 +1,13 @@
+{
+  "embeddings": [
+    {
+      "tensorName": "BankTensor",
+      "tensorShape": [
+        1456,
+        64
+      ],
+      "tensorPath": "https://raw.githubusercontent.com/QianchaoLiu/associate/master/hackathon/embedding_vetor.projector",
+      "metadataPath": "https://raw.githubusercontent.com/QianchaoLiu/associate/master/hackathon/embedding_node.projector"
+    }
+  ]
+}
